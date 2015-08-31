@@ -31,6 +31,7 @@ module APN
     option :redis_host, :default => 'localhost'
     option :redis_port, :default => 6379
     option :redis_password
+    option :redis_db,    :default => 13
     option :log_file
     option :cert_file
     option :cert_password

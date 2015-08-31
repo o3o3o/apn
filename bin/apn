@@ -1,6 +1,8 @@
 #!/usr/bin/env ruby
 $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 
+#print $LOAD_PATH
+
 ARGV << '--help' if ARGV.empty?
 
 require 'optparse'
@@ -32,6 +34,9 @@ OptionParser.new do |opts|
   opts.on("--redis_password=OPTIONAL", "Redis password") do |redis_password|
     options[:redis_password] = redis_password
   end
+  opts.on("--redis_db=OPTIONAL", "Redis db") do |redis_db|
+    options[:redis_db] = redis_db
+  end
 
   opts.on("--environment=OPTIONAL", "Specify sandbox or production") do |env|
     if env == 'production'
@@ -52,6 +57,9 @@ OptionParser.new do |opts|
   opts.on("--log_file=OPTIONAL", "Logfile to log in") do |log_file|
     options[:logfile] = log_file
   end
+  opts.on("--foreground", "run foreground") do 
+    options[:foreground] = true
+  end
 
   opts.on('--help', 'Show help') do |help|
     puts opts
@@ -62,6 +70,8 @@ options[:queue] ||= 'apn_queue'
 
 pids_dir  = "tmp/pids"
 log_dir   = "log"
+
+print "start command"
 
 case command
   when 'start'
@@ -75,6 +85,7 @@ case command
           :log_output => true
       )
     end
+    print "run"
 
     APN::Daemon.new(options).run!
   when 'run'

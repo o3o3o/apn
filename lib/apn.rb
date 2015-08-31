@@ -13,7 +13,7 @@ module APN
     end
 
     def redis
-      @redis ||= Redis.new(:host => APN.config.redis_host, :port => APN.config.redis_port, :password => APN.config.redis_password)
+      @redis ||= Redis.new(:host => APN.config.redis_host, :port => APN.config.redis_port, :password => APN.config.redis_password, :db => APN.config.redis_db)
     end
 
     def logger=(logger)

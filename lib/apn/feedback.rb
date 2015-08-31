@@ -33,6 +33,7 @@ module APN
       end
 
       APN.log(:info, 'Feedback received!')
+      APN.log(:info, "#{feedbacks}")
 
       return feedbacks
     end

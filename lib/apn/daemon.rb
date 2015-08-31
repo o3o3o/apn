@@ -18,10 +18,12 @@ module APN
       options[:port]        ||=  2195
       options[:queue]       ||= 'apn_queue'
       options[:password]    ||= ''
+      options[:redis_db]    ||= 0
       raise 'No cert provided!' unless options[:cert]
 
       redis_options = { :host => options[:redis_host], :port => options[:redis_port] }
       redis_options[:password] = options[:redis_password] if options.has_key?(:redis_password)
+      redis_options[:db] = options[:redis_db] if options.has_key?(:redis_db)
 
       @redis = Redis.new(redis_options)
       @queue = options[:queue]
@@ -30,12 +32,13 @@ module APN
       @host = options[:host]
       @port = options[:port]
       @dir = options[:dir]
+      @db = options[:redis_db]
 
       APN.configure do |config|
         config.log_file = options[:logfile]
       end
 
-      APN.log(:info, "Listening on queue: #{self.queue}")
+      APN.log(:info, "Listening on queue: #{self.queue} db:#{@db}")
     end
 
     def run!
@@ -43,11 +46,12 @@ module APN
 
       loop do
         begin
-          message = @redis.blpop(self.queue, 1)
+          message = @redis.brpop(self.queue, 1)
           if message
-            @notification = APN::Notification.new(JSON.parse(message.last,:symbolize_names => true))
+              APN.log(:info, "wyh---------->#{message} ----------->\n")
+              @notification = APN::Notification.new(JSON.parse(message.last,:symbolize_names => true))
 
-            send_notification
+              send_notification
           end
         rescue Exception => e
           if e.class == Interrupt || e.class == SystemExit
@@ -55,7 +59,7 @@ module APN
             exit(0)
           end
 
-          APN.log(:error, "Encountered error: #{e}, backtrace #{e.backtrace}")
+          APN.log(:error, "class: #{e.class} Encountered error: #{e}, backtrace #{e.backtrace}")
 
           APN.log(:info, 'Trying to reconnect...')
           client.connect!

@@ -6,6 +6,7 @@ module APN
       [:badge, :alert, :sound, :device_token, :content_available, :custom_properties].each do |k|
         self.instance_variable_set("@#{k}".to_sym, hash[k]) if hash[k]
       end
+      APN.log(:err, "Must provide device token: #{hash} \n") if self.device_token.nil?
       raise "Must provide device token: #{hash}" if self.device_token.nil?
       self.device_token = self.device_token.delete(' ')
     end
