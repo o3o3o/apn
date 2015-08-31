@@ -53,26 +53,31 @@ module APN
     end
 
     def push(notification)
-      begin
-        APN.log(:info, "Sending #{notification.device_token}: #{notification.json_payload}")
-        socket.write(notification.to_bytes)
-        socket.flush
+        tries = 0
+        begin
+            tries += 1
+            APN.log(:info, "Sending #{notification.device_token}: #{notification.json_payload}")
+            socket.write(notification.to_bytes)
+            socket.flush
 
-        if IO.select([socket], nil, nil, 1) && error = socket.read(6)
-          error = error.unpack('ccN')
-          APN.log(:error, "Encountered error in push method: #{error}, backtrace #{error.backtrace}")
-          return false
+            if IO.select([socket], nil, nil, 1) && error = socket.read(6)
+                error = error.unpack('ccN')
+                APN.log(:error, "Encountered error in push method: #{error}, backtrace #{error.backtrace}")
+                return false
+            end
+
+            APN.log(:info, 'Message sent')
+
+            true
+        rescue OpenSSL::SSL::SSLError, Errno::EPIPE => e
+            #APN.log(:error, "class: #{e.class} Encountered error: #{e}, backtrace #{e.backtrace}")
+            APN.log(:info, 'Trying to reconnect...')
+            reset_socket
+            APN.log(:info, 'Reconnected')
+            if (tries < 2)
+                retry
+            end
         end
-
-        APN.log(:info, 'Message sent')
-
-        true
-      rescue OpenSSL::SSL::SSLError, Errno::EPIPE => e
-        APN.log(:error, "Encountered error: #{e}, backtrace #{e.backtrace}")
-        APN.log(:info, 'Trying to reconnect...')
-        reset_socket
-        APN.log(:info, 'Reconnected')
-      end
     end
 
     def feedback
